@@ -68,27 +68,36 @@ docker run --rm bjmalone724/car-price-api:v1 pip list --format=freeze > requirem
 
 ### Multi-Stage Docker Build with uv
 
+The Dockerfile uses a **multi-stage build** to optimize image size and security:
+
 ```dockerfile
-FROM python:3.11-slim
-
-# Install uv package manager
+# Builder stage - install dependencies
+FROM python:3.11-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
 WORKDIR /app
 COPY requirements.txt .
-RUN uv pip install --system -r requirements.txt
-
-COPY models/ ./models/
+RUN /usr/local/bin/uv venv /app/.venv && \
+    /app/.venv/bin/uv pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
+COPY models/ ./models/
 
+# Runtime stage - minimal production image
+FROM python:3.11-slim AS runtime
+ENV PATH="/app/.venv/bin:$PATH"
+WORKDIR /app
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/src /app/src
+COPY --from=builder /app/models /app/models
 EXPOSE 8000
 CMD ["uvicorn", "src.main:api", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 **Benefits**:
-- Build time: 49 seconds (first build), 0.6 seconds (code-only changes)
-- Traditional pip: 3-4 minutes
-- Layer caching optimizes for code iteration
+- **Smaller image size**: Runtime stage excludes build tools and uv binary
+- **Better security**: Fewer installed packages in production image
+- **Virtual environment isolation**: Dependencies installed in venv instead of system-wide
+- **Fast builds**: uv is 10-100x faster than pip (49 seconds first build, 0.6 seconds for code-only changes vs 3-4 minutes with traditional pip)
+- **Layer caching**: Optimizes for code iteration by separating dependency installation from code copying
 
 ### Deployment Architecture: Pre-built Images vs Build-on-Deploy
 

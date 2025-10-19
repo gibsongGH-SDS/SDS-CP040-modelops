@@ -1,15 +1,30 @@
-FROM python:3.11-slim
+# Builder stage
+FROM python:3.11-slim AS builder
 
-# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN uv pip install --system -r requirements.txt
 
-COPY models/ ./models/
+# Install dependencies into virtual environment
+RUN /usr/local/bin/uv venv /app/.venv && \
+    /usr/local/bin/uv pip install --no-cache-dir -r requirements.txt --python /app/.venv/bin/python
+
 COPY src/ ./src/
+COPY models/ ./models/
+
+# Runtime stage
+FROM python:3.11-slim AS runtime
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+# Copy virtual environment and source code from builder
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/src /app/src
+COPY --from=builder /app/models /app/models
 
 EXPOSE 8000
 
