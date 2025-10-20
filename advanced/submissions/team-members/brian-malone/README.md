@@ -21,10 +21,16 @@ The system consists of two independently deployed services:
 
 ```
 car-price-ml-deployment/
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # CI/CD pipeline configuration
 ├── fast-api-car-price/          # Backend API
 │   ├── src/
 │   │   ├── __init__.py
 │   │   └── main.py              # FastAPI application
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_api.py          # Automated test suite
 │   ├── models/
 │   │   └── model.pkl            # Trained XGBoost model (gitignored)
 │   ├── Dockerfile               # Multi-stage container build
@@ -47,6 +53,11 @@ car-price-ml-deployment/
 ### Frontend
 - **Streamlit**: Python framework for data applications
 - **Streamlit Community Cloud**: Free hosting for Streamlit apps
+
+### CI/CD
+- **GitHub Actions**: Automated testing and deployment pipeline
+- **pytest**: Testing framework with 8 integration tests
+- **Mock objects**: Fast test execution (1.5s vs 57s with real model)
 
 ## Key Technical Decisions
 
@@ -188,6 +199,109 @@ docker push bjmalone724/car-price-api:v1
 
 Streamlit Cloud automatically redeploys on git push.
 
+## CI/CD Pipeline
+
+This project implements continuous integration and deployment using GitHub Actions.
+
+### Workflow Overview
+
+Every push to `main` triggers an automated pipeline:
+
+1. **Test Stage**
+   - Runs 8 integration tests using pytest
+   - Tests health endpoint, prediction endpoint, input validation
+   - Uses mocked ML model for fast execution (1.5s)
+   - Fails fast if any test fails
+
+2. **Build and Push Stage** (only if tests pass)
+   - Builds Docker image using multi-stage Dockerfile
+   - Tags with git commit SHA (`main-abc1234`) and `latest`
+   - Pushes to Docker Hub registry
+   - Uses layer caching for faster builds
+
+### Running Tests Locally
+
+```bash
+cd fast-api-car-price
+
+# Create virtual environment with uv
+uv venv
+source .venv/bin/activate
+
+# Install dependencies
+uv pip install pytest httpx -r requirements.txt
+
+# Run tests
+pytest tests/ -v
+```
+
+**Expected output:**
+```
+======================== 8 passed in 1.56s =========================
+```
+
+### Test Coverage
+
+- `test_health_endpoint_returns_200` - Verifies API is reachable
+- `test_health_endpoint_returns_correct_structure` - Validates health response format
+- `test_predict_endpoint_accepts_valid_data` - Happy path prediction test
+- `test_predict_endpoint_returns_price` - Validates prediction response structure
+- `test_predict_endpoint_rejects_missing_fields` - Input validation test
+- `test_predict_endpoint_rejects_invalid_types` - Type validation test
+- `test_predict_handles_edge_cases` - Boundary condition testing
+- `test_full_prediction_workflow` - End-to-end integration test
+
+### Workflow Configuration
+
+**File:** `.github/workflows/ci.yml`
+
+**Triggers:**
+- Push to `main` branch (runs tests + build)
+- Pull requests to `main` (runs tests only)
+- Manual dispatch via GitHub UI
+
+**Path filters:** Only triggers on changes to `fast-api-car-price/` directory
+
+**Secrets required:**
+- `DOCKER_USERNAME` - Docker Hub username
+- `DOCKER_PASSWORD` - Docker Hub access token
+
+### Deployment Process
+
+1. Make code changes locally
+2. Test locally: `pytest tests/ -v`
+3. Commit: `git commit -m "description"`
+4. Push: `git push origin main`
+5. GitHub Actions automatically:
+   - ✅ Runs all tests
+   - 🐳 Builds Docker image (if tests pass)
+   - 📤 Pushes to Docker Hub
+6. Render pulls updated image and redeploys
+
+### Monitoring Builds
+
+- **GitHub Actions**: [View workflows](https://github.com/brianjmalone/SDS-CP040-modelops/actions)
+- **Docker Hub**: [View images](https://hub.docker.com/r/bjmalone724/car-price-api)
+- **Build time**: ~3-4 minutes (first build), ~1-2 minutes (cached)
+
+### Why Mock the Model in Tests?
+
+**Problem:** Loading the real XGBoost model takes ~50 seconds, making tests painfully slow.
+
+**Solution:** Use Python's `unittest.mock` to fake model predictions:
+```python
+mock_model = Mock()
+mock_model.predict.return_value = [15000.0]
+```
+
+**Benefits:**
+- Tests run in 1.5s instead of 57s (36x faster)
+- Tests verify API logic, not model accuracy
+- No need to commit large model.pkl file to git
+- Follows industry best practices
+
+**Trade-off:** Tests don't catch model loading errors. The Docker build process validates the real model loads correctly.
+
 ## Local Development
 
 ### Run API Locally
@@ -289,6 +403,9 @@ This project demonstrates:
 - Dependency management trade-offs
 - Monorepo project structure
 - Production considerations (health checks, cold starts, caching)
+- **CI/CD pipeline implementation with GitHub Actions**
+- **Automated testing with pytest and mocking strategies**
+- **Container registry workflow (build → test → push → deploy)**
 
 ## Next Steps
 
@@ -296,9 +413,11 @@ Potential enhancements for production readiness:
 - Add request logging and monitoring
 - Implement model versioning (A/B testing)
 - Add input validation with meaningful error messages
-- Set up CI/CD pipeline with GitHub Actions
+- ✅ ~~Set up CI/CD pipeline with GitHub Actions~~ **COMPLETED**
 - Store predictions in database for analysis
 - Add authentication and rate limiting
+- Add code coverage reporting
+- Implement blue-green deployments
 
 ## Requirements
 
