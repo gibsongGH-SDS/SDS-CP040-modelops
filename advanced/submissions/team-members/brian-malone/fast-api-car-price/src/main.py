@@ -3,6 +3,14 @@ from pydantic import BaseModel, Field
 import joblib
 import pandas as pd
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 api = FastAPI(
     title="Car Price Prediction API",
@@ -15,11 +23,12 @@ model = None
 async def load_model():
     global model
     model_path = os.getenv("MODEL_PATH", "/app/models/model.pkl")
+    logger.info(f"Starting model loading from {model_path}")
     try:
         model = joblib.load(model_path)
-        print(f"✓ Model loaded from {model_path}")
+        logger.info(f"Model loaded successfully from {model_path}")
     except Exception as e:
-        print(f"✗ Failed to load model: {e}")
+        logger.error(f"Failed to load model: {e}", exc_info=True)
         raise
 
 class CarFeatures(BaseModel):
@@ -32,13 +41,17 @@ class CarFeatures(BaseModel):
 
 @api.get("/health")
 async def health_check():
+    logger.debug("Health check requested")
     return {"status": "healthy", "model_loaded": model is not None}
 
 @api.post("/predict")
 async def predict(features: CarFeatures):
+    logger.info(f"Prediction request received for {features.Manufacturer} {features.Model}")
+
     if model is None:
+        logger.error("Prediction attempted but model not loaded")
         raise HTTPException(status_code=503, detail="Model not loaded")
-    
+
     try:
         CURRENT_YEAR = 2025
         age = max(CURRENT_YEAR - features.Year_of_manufacture, 0)
@@ -58,8 +71,10 @@ async def predict(features: CarFeatures):
         }
         df = pd.DataFrame([row])
         prediction = model.predict(df)[0]
-        
+
+        logger.info(f"Prediction successful: £{prediction:.2f} for {features.Manufacturer} {features.Model}")
         return {"predicted_price_gbp": float(prediction)}
-    
+
     except Exception as e:
+        logger.error(f"Prediction failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
