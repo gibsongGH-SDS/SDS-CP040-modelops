@@ -302,6 +302,44 @@ mock_model.predict.return_value = [15000.0]
 
 **Trade-off:** Tests don't catch model loading errors. The Docker build process validates the real model loads correctly.
 
+### Model Storage: Hugging Face Instead of Git
+
+**Problem:** ML models (even small ones) shouldn't be committed to git repositories.
+
+**Solution:** Store model on Hugging Face Hub, download during Docker build.
+
+**Steps:**
+1. Upload model to HF (one-time):
+   - Create model repo at https://huggingface.co/new
+   - Upload `model.pkl` via web UI
+   - Repo: `brianmalone/car-price-model`
+
+2. Dockerfile downloads model during build:
+```dockerfile
+RUN /usr/local/bin/uv pip install huggingface_hub --python /app/.venv/bin/python
+RUN mkdir -p /app/models && \
+    /app/.venv/bin/python -c "from huggingface_hub import hf_hub_download; \
+    hf_hub_download(repo_id='brianmalone/car-price-model', \
+    filename='model.pkl', local_dir='/app/models')"
+```
+
+**GOTCHA - Docker Cache Issue:**
+If you previously had `COPY models/ ./models/` in your Dockerfile and switch to downloading from HF, GitHub Actions may fail with:
+```
+ERROR: failed to compute cache key: "/models": not found
+```
+
+**Fix:** Disable Docker layer caching temporarily:
+```yaml
+# In .github/workflows/ci.yml
+- name: Build and push Docker image
+  uses: docker/build-push-action@v5
+  with:
+    no-cache: true  # Forces fresh build, ignores old cached layers
+```
+
+After one successful build, you can re-enable caching by removing `no-cache: true`.
+
 ## Local Development
 
 ### Run API Locally
