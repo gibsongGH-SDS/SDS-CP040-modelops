@@ -357,6 +357,38 @@ if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
 **Solution:** Use `git push` to trigger workflows when you need the Docker build to run.
 
+### Testing the CI/CD Pipeline Without Real Changes
+
+**Problem:** You want to test the pipeline but don't have any meaningful code changes to commit.
+
+**Solution:** Add a blank line to a file inside the watched path to trigger the workflow:
+
+```bash
+# Add a blank line to main.py (or any file in fast-api-car-price/)
+echo "" >> /Users/bjmalone724/Desktop/SDS-CP040-modelops/advanced/submissions/team-members/brian-malone/fast-api-car-price/src/main.py
+
+# Stage, commit, and push
+git add advanced/submissions/team-members/brian-malone/fast-api-car-price/src/main.py
+git commit -m "Trigger CI/CD workflow"
+git push origin main
+```
+
+**Why this works:**
+- The workflow has a path filter: `paths: ['advanced/submissions/team-members/brian-malone/fast-api-car-price/**']`
+- Any change to files in this directory triggers the workflow
+- Adding a blank line is a harmless change that git detects
+- Changes to files outside this path (like the top-level README.md) won't trigger the workflow
+
+**Alternative:** If you don't want to modify source files, create a dummy file:
+```bash
+touch /Users/bjmalone724/Desktop/SDS-CP040-modelops/advanced/submissions/team-members/brian-malone/fast-api-car-price/.trigger
+git add advanced/submissions/team-members/brian-malone/fast-api-car-price/.trigger
+git commit -m "Trigger CI/CD pipeline"
+git push origin main
+```
+
+However, this creates clutter in your repository. The blank line approach is cleaner.
+
 ## Local Development
 
 ### Run API Locally
