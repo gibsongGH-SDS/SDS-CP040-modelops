@@ -44,6 +44,29 @@ async def health_check():
     logger.debug("Health check requested")
     return {"status": "healthy", "model_loaded": model is not None}
 
+@api.get("/metadata")
+async def metadata():
+    logger.debug("Metadata requested")
+    return {
+        "model_name": "XGBoost Car Price Predictor",
+        "version": "1.0.0",
+        "last_updated": "2024-10-12",
+        "features": [
+            "Manufacturer",
+            "Model",
+            "Fuel type",
+            "Engine size",
+            "Year of manufacture",
+            "Mileage"
+        ],
+        "derived_features": [
+            "age",
+            "mileage_per_year",
+            "vintage"
+        ],
+        "target": "price (GBP)"
+    }
+
 @api.post("/predict")
 async def predict(features: CarFeatures):
     logger.info(f"Prediction request received for {features.Manufacturer} {features.Model}")
