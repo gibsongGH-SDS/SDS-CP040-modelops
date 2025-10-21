@@ -78,3 +78,4 @@ async def predict(features: CarFeatures):
     except Exception as e:
         logger.error(f"Prediction failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
