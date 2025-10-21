@@ -340,6 +340,23 @@ ERROR: failed to compute cache key: "/models": not found
 
 After one successful build, you can re-enable caching by removing `no-cache: true`.
 
+### GitHub Actions Workflow Trigger Gotcha
+
+**Problem:** The `build-and-push` job only runs on `push` events, not manual `workflow_dispatch`.
+
+**Why:** The workflow has this condition:
+```yaml
+if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+```
+
+**What this means:**
+- ✅ `git push origin main` → Tests run AND Docker builds
+- ⊘ Manual "Run workflow" button → Tests run, Docker build SKIPPED
+
+**When you'll see this:** If you manually trigger the workflow from GitHub UI, the build job shows a skip icon (⊘) instead of running.
+
+**Solution:** Use `git push` to trigger workflows when you need the Docker build to run.
+
 ## Local Development
 
 ### Run API Locally
