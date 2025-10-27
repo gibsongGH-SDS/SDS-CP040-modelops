@@ -1,17 +1,17 @@
 # Contains all libraries that are needed for this project
 
 # Data manipulation and analysis
-pandas
-numpy
+pandas == 2.3.3
+numpy == 2.3.3
 
 # Visualization
-matplotlib
-seaborn
-plotly
+#matplotlib
+#seaborn
+#plotly
 
 # Machine learning
-scikit-learn
-xgboost
+scikit-learn==1.7.2
+xgboost==3.0.5
 # lightgbm
 # catboost
 
@@ -25,8 +25,8 @@ xgboost
 # scipy
 
 # Jupyter support
-jupyter
-notebook
+jupyter == 1.1.1
+notebook == 7.4.7
 
 # Model evaluation
 # statsmodels
@@ -39,6 +39,8 @@ notebook
 # openpyxl
 
 # fastapi dependencies
-fastapi
+fastapi == 0.119.0
 fastapi[standard]
-uvicorn
+uvicorn == 0.37.0
+pydantic == 2.12.0
+jinja2 == 3.1.6

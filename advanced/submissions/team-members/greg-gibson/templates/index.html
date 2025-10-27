@@ -148,7 +148,6 @@
         const form = document.getElementById('predictionForm');
         const submitBtn = document.getElementById('submitBtn');
         const resultDiv = document.getElementById('result');
-
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -158,19 +157,17 @@
             resultDiv.style.display = 'block';
             resultDiv.className = 'result loading';
             resultDiv.textContent = 'Processing your request...';
-
             try {
                 // Collect form data
                 const formData = new FormData(form);
                 const payload = {
-                    "Manufacturer": formData.get('manufacturer'),
-                    "Model": formData.get('model'),
-                    "Fuel type": formData.get('fuelType'),
-                    "Engine size": parseFloat(formData.get('engineSize')),
-                    "Year of manufacture": parseInt(formData.get('year')),
-                    "Mileage": parseFloat(formData.get('mileage'))
+                  manufacturer: formData.get('manufacturer'),
+                  model: formData.get('model'),
+                  fuel_type: formData.get('fuelType'),
+                  engine_size: parseFloat(formData.get('engineSize')),
+                  year_of_manufacture: parseInt(formData.get('year')),
+                  mileage: parseFloat(formData.get('mileage')),
                 };
-
                 // Make API call
                 const response = await fetch('/predict', {
                     method: 'POST',
@@ -179,11 +176,9 @@
                     },
                     body: JSON.stringify(payload)
                 });
-
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
                 const result = await response.json();
                 
                 // Show success result
@@ -195,7 +190,6 @@
                         maximumFractionDigits: 2
                     })}</p>
                 `;
-
             } catch (error) {
                 console.error('Error:', error);
                 resultDiv.className = 'result error';
@@ -210,7 +204,6 @@
                 submitBtn.textContent = 'Predict Price';
             }
         });
-
         // Add input validation
         document.getElementById('year').addEventListener('input', function() {
             const currentYear = new Date().getFullYear();
@@ -218,13 +211,11 @@
                 this.value = currentYear;
             }
         });
-
         document.getElementById('engineSize').addEventListener('input', function() {
             if (this.value > 10) {
                 this.value = 10;
             }
         });
-
         document.getElementById('mileage').addEventListener('input', function() {
             if (this.value > 1000000) {
                 this.value = 1000000;
