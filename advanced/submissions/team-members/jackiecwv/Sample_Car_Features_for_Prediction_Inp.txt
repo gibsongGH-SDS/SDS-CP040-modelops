@@ -1,0 +1,49 @@
+# Sample Car Features for Prediction Input
+{
+  "Manufacturer": "Honda",
+  "Model": "Civic",
+  "Fuel type": "Petrol",
+  "Engine size": 1.6,
+  "Year of manufacture": 2016,
+  "Mileage": 42000
+}
+{
+  "Manufacturer": "Toyota",
+  "Model": "Corolla",
+  "Fuel type": "Petrol",
+  "Engine size": 1.8,
+  "Year of manufacture": 2019,
+  "Mileage": 35000
+}
+{
+  "Manufacturer": "Ford",
+  "Model": "Focus",
+  "Fuel type": "Diesel",
+  "Engine size": 2.0,
+  "Year of manufacture": 2015,
+  "Mileage": 60000
+}
+{
+  "Manufacturer": "BMW",
+  "Model": "3 Series",
+  "Fuel type": "Diesel",
+  "Engine size": 2.0,
+  "Year of manufacture": 2018,
+  "Mileage": 40000
+}
+{
+  "Manufacturer": "Audi",
+  "Model": "A4",
+  "Fuel type": "Petrol",
+  "Engine size": 2.0,
+  "Year of manufacture": 2017,
+  "Mileage": 50000
+}
+{
+  "Manufacturer": "Mercedes-Benz",
+  "Model": "C-Class",
+  "Fuel type": "Diesel",
+  "Engine size": 2.2,
+  "Year of manufacture": 2016,
+  "Mileage": 55000
+}
